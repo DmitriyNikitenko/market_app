@@ -6,18 +6,12 @@ import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
 
-    @NotBlank(message = "Email cannot be empty.")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email не может быть пустым")
+    @Email(message = "Некорректный формат email")
     private String email;
 
-    @Size(min = 1, message = "First name must be longer than 1 symbol.")
-    private String firstName;
-
-    @Size(min = 1, message = "Last name must be longer than 1 symbol.")
-    private String lastName;
-
-    @NotBlank(message = "The password cannot be empty.")
-    @Size(min = 6, message = "The password must be at least 6 characters long.")
+    @NotBlank(message = "Пароль не может быть пустым")
+    @Size(min = 6, message = "Пароль должен быть не короче 6 символов")
     private String password;
 
     public String getEmail() {
@@ -26,22 +20,6 @@ public class RegisterRequest {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 
     public String getPassword() {
