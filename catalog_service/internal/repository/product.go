@@ -23,7 +23,7 @@ func NewProductRepository(db *pgxpool.Pool) *ProductRepository {
 // Method for sending SQL request
 func (r *ProductRepository) GetAll(ctx context.Context) ([]model.Product, error) {
 
-	query := `SELECT id, name, price, category, is_available FROM products`
+	query := `SELECT id, name, price, category, is_available FROM products ORDER BY id ASC`
 
 	//Sending request to db
 	rows, err := r.db.Query(ctx, query)
@@ -102,4 +102,49 @@ func (r *ProductRepository) Create(ctx context.Context, product model.Product) (
 	}
 
 	return product, err
+}
+
+func (r *ProductRepository) Update(ctx context.Context, id int, product model.Product) error {
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	query := `
+		UPDATE products
+		SET name=$1, price=$2, category=$3, is_available=$4
+		WHERE id=$5;
+	`
+
+	cmdTag, err := r.db.Exec(ctx, query, product.Name, product.Price, product.Category, product.IsAvailable, id)
+
+	if err != nil {
+		return fmt.Errorf("Could not update product: %w", err)
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+
+	return nil
+}
+
+func (r *ProductRepository) Delete(ctx context.Context, id int) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	query := `
+		DELETE FROM products
+		WHERE id=$1;
+	`
+
+	cmdTag, err := r.db.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("Could not delete product: %w", err)
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+
+	return nil
 }

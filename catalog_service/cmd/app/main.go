@@ -31,5 +31,9 @@ func main() {
 
 	r.POST("/api/v1/menu", productHandler.Create) //testing POST function for creating products
 
+	r.PUT("/api/v1/menu/:id", productHandler.Update) //testing PUT function for updating products
+
+	r.DELETE("/api/v1/menu/:id", productHandler.Delete) //testing DELETE function for deleting products
+
 	r.Run(":8080")
 }
