@@ -21,7 +21,7 @@ func NewProductHandler(repo *repository.ProductRepository) *ProductHandler {
 	return &ProductHandler{repo: repo}
 }
 
-func (h *ProductHandler) GetMenu(ctx *gin.Context) {
+func (h *ProductHandler) GetAll(ctx *gin.Context) {
 	//ask from repo the list of products
 	products, err := h.repo.GetAll(ctx.Request.Context())
 	if err != nil {
@@ -38,6 +38,7 @@ func (h *ProductHandler) GetByID(ctx *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "item id to GET is incorrect"})
+		return
 	}
 
 	product, err := h.repo.GetByID(ctx.Request.Context(), id)
@@ -73,6 +74,7 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "item id to PATCH is incorrect"})
+		return
 	}
 
 	var input model.Product
@@ -91,7 +93,7 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"message": "Product was successfully updated!"})
+	ctx.JSON(http.StatusOK, gin.H{"message": "Product was successfully updated!"})
 
 }
 
