@@ -16,6 +16,21 @@ services:
       timeout: 5s
       retries: 5
 
+  migrations:
+    image: migrate/migrate
+    container_name: catalog_migrations
+    volumes:
+      - ./migrations:/migrations
+    command:
+      - -path
+      - /migrations
+      - -database
+      - ${DATABASE_URL}
+      - up
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   catalog_service:
     build:
       context: .
@@ -29,5 +44,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
 volumes:
   pgdata:

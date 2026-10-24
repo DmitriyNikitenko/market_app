@@ -2,6 +2,7 @@ package repository
 
 import (
 	"catalog_service/internal/model"
+	"catalog_service/internal/pkg"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type ProductRepository struct {
@@ -51,6 +53,8 @@ func (r *ProductRepository) GetAll(ctx context.Context) ([]model.Product, error)
 
 func (r *ProductRepository) GetByID(ctx context.Context, id int) (model.Product, error) {
 
+	log := pkg.FromContext(ctx)
+
 	query := `
 	SELECT id, name, price, category, is_available 
 	FROM products
@@ -65,12 +69,14 @@ func (r *ProductRepository) GetByID(ctx context.Context, id int) (model.Product,
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			log.Debug("Product not found", zap.Int("id", id))
 			return model.Product{}, fmt.Errorf(
 				"product with id ='%d': %w",
 				id,
 				err,
 			)
 		}
+		log.Error("Database scan error during GetByID", zap.Error(err), zap.Int("id", id))
 		return model.Product{}, fmt.Errorf("scan error: %w", err)
 
 	}
@@ -129,6 +135,9 @@ func (r *ProductRepository) Update(ctx context.Context, id int, product model.Pr
 }
 
 func (r *ProductRepository) Delete(ctx context.Context, id int) error {
+
+	log := pkg.FromContext(ctx)
+
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -139,6 +148,8 @@ func (r *ProductRepository) Delete(ctx context.Context, id int) error {
 
 	cmdTag, err := r.db.Exec(ctx, query, id)
 	if err != nil {
+		log.Error("Database scan error during GetByID", zap.Error(err), zap.Int("id", id))
+
 		return fmt.Errorf("Could not delete product: %w", err)
 	}
 

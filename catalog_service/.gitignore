@@ -1,2 +1,6 @@
 .env
 *.exe
+logs/
+main
+catalog_service
+.DS_Store

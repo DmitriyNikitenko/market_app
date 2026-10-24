@@ -2,7 +2,7 @@ package handler
 
 import (
 	"catalog_service/internal/model"
-	"catalog_service/internal/repository"
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -12,18 +12,25 @@ import (
 )
 
 // handler needs repo to ask for data from it
-type ProductHandler struct {
-	repo *repository.ProductRepository
+type ProductService interface {
+	GetAll(ctx context.Context) ([]model.Product, error)
+	GetByID(ctx context.Context, id int) (model.Product, error)
+	Create(ctx context.Context, product model.Product) (model.Product, error)
+	Update(ctx context.Context, id int, product model.Product) error
+	Delete(ctx context.Context, id int) error
 }
 
-// putting repo in handler
-func NewProductHandler(repo *repository.ProductRepository) *ProductHandler {
-	return &ProductHandler{repo: repo}
+type ProductHandler struct {
+	service ProductService
+}
+
+func NewProductHandler(service ProductService) *ProductHandler {
+	return &ProductHandler{service: service}
 }
 
 func (h *ProductHandler) GetAll(ctx *gin.Context) {
-	//ask from repo the list of products
-	products, err := h.repo.GetAll(ctx.Request.Context())
+	//ask from service the list of products
+	products, err := h.service.GetAll(ctx.Request.Context())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error to get menu"})
 		return
@@ -41,7 +48,7 @@ func (h *ProductHandler) GetByID(ctx *gin.Context) {
 		return
 	}
 
-	product, err := h.repo.GetByID(ctx.Request.Context(), id)
+	product, err := h.service.GetByID(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "item not found"})
 		return
@@ -58,9 +65,9 @@ func (h *ProductHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	createdProduct, err := h.repo.Create(ctx.Request.Context(), input)
+	createdProduct, err := h.service.Create(ctx.Request.Context(), input)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not create new product"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -83,7 +90,7 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	err = h.repo.Update(ctx.Request.Context(), id, input)
+	err = h.service.Update(ctx.Request.Context(), id, input)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "could not find product"})
@@ -106,7 +113,7 @@ func (h *ProductHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	err = h.repo.Delete(ctx.Request.Context(), id)
+	err = h.service.Delete(ctx.Request.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "could not find product"})

@@ -3,10 +3,11 @@ package main
 import (
 	"catalog_service/internal/config"
 	"catalog_service/internal/handler"
+	"catalog_service/internal/pkg"
 	"catalog_service/internal/repository"
+	"catalog_service/internal/service"
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -14,9 +15,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 func main() {
+
+	logCfg := pkg.NewConfigMust()
+	logger, err := pkg.NewLogger(logCfg)
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Close()
+
 	//initializing config via NewConfigMust() method
 	cfg := config.NewConfigMust()
 
@@ -26,20 +36,23 @@ func main() {
 
 	dbPool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal("Could not create connection pool with DataBase: %v", err)
+		logger.Fatal("Could not create connection pool with DataBase", zap.Error(err))
 	}
 	defer dbPool.Close()
 
 	if err := dbPool.Ping(ctx); err != nil {
-		log.Fatalf("DataBase ping is failed: %v", err)
+		logger.Fatal("DataBase ping is failed", zap.Error(err))
 	}
-	log.Println("Connection to DataBase is SUCCESSFULL")
+	logger.Info("Connection to DataBase is SUCCESSFULL")
 
 	//app layer assembling
 	repo := repository.NewProductRepository(dbPool)
-	productHandler := handler.NewProductHandler(repo)
+	productService := service.NewProductService(repo)
+	productHandler := handler.NewProductHandler(productService)
 
 	r := gin.Default()
+
+	r.Use(handler.LoggerMiddleware(logger))
 
 	api := r.Group("/api/v1")
 	{
@@ -58,23 +71,23 @@ func main() {
 
 	//starting server
 	go func() {
-		log.Printf("Server is running on port: %s", cfg.Port)
+		logger.Info("Server is running on port", zap.String("port", cfg.Port))
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Server running error: %v", err)
+			logger.Fatal("Server running error", zap.Error(err))
 		}
 	}()
 
 	//waiting for context decline
 	<-ctx.Done()
-	log.Println("Shutting down server gracefully...")
+	logger.Info("Shutting down server gracefully...")
 
 	//giving server some time(5sec) to finish current requests
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		logger.Fatal("Server forced to shutdown", zap.Error(err))
 	}
-	log.Println("Server exiting successfully")
+	logger.Info("Server exiting successfully")
 
 }
