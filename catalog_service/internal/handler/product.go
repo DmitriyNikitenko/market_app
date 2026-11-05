@@ -4,8 +4,11 @@ import (
 	"catalog_service/internal/model"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -125,4 +128,34 @@ func (h *ProductHandler) Delete(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Product was successfully deleted"})
 
+}
+
+func (h *ProductHandler) UploadImage(ctx *gin.Context) {
+	//извлекаем файл из http запроса по ключу "image"
+	file, err := ctx.FormFile("image")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to get image"})
+		return
+	}
+
+	//генерируем уникальное имя файла
+	//filepath.Ext(file.Filename) достанет расширение(например .jpg или .png)
+	extension := filepath.Ext(file.Filename)
+
+	//создадим имя
+	newFileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), extension)
+
+	//путь физического сохранения файла на диске сервера
+	savePath := "./public/images/" + newFileName
+
+	//сохранение файла на диск
+	if err := ctx.SaveUploadedFile(file, savePath); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	//URL по которому будет доступна картинка
+	imageURL := "/static/images/" + newFileName
+
+	ctx.JSON(http.StatusOK, gin.H{"url": imageURL})
 }

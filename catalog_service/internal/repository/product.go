@@ -25,7 +25,7 @@ func NewProductRepository(db *pgxpool.Pool) *ProductRepository {
 // Method for sending SQL request
 func (r *ProductRepository) GetAll(ctx context.Context) ([]model.Product, error) {
 
-	query := `SELECT id, name, price, category, is_available FROM products ORDER BY id ASC`
+	query := `SELECT id, name, price, category, is_available, image FROM products ORDER BY id ASC`
 
 	//Sending request to db
 	rows, err := r.db.Query(ctx, query)
@@ -41,7 +41,7 @@ func (r *ProductRepository) GetAll(ctx context.Context) ([]model.Product, error)
 	for rows.Next() {
 		var p model.Product
 		//Scan puts every item from db to Go structure
-		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Category, &p.IsAvailable); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Category, &p.IsAvailable, &p.Image); err != nil {
 			return nil, err
 		}
 		//Appending ready item to massive
@@ -56,16 +56,16 @@ func (r *ProductRepository) GetByID(ctx context.Context, id int) (model.Product,
 	log := pkg.FromContext(ctx)
 
 	query := `
-	SELECT id, name, price, category, is_available 
-	FROM products
-	WHERE id=$1;
+		SELECT id, name, price, category, is_available, image
+		FROM products
+		WHERE id=$1;
 	`
 
 	row := r.db.QueryRow(ctx, query, id)
 
 	var product model.Product
 
-	err := row.Scan(&product.ID, &product.Name, &product.Price, &product.Category, &product.IsAvailable)
+	err := row.Scan(&product.ID, &product.Name, &product.Price, &product.Category, &product.IsAvailable, &product.Image)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -89,8 +89,8 @@ func (r *ProductRepository) Create(ctx context.Context, product model.Product) (
 	defer cancel()
 
 	query := `
-		INSERT INTO products (name, price, category, is_available) 
-		VALUES ($1, $2, $3, $4) 
+		INSERT INTO products (name, price, category, is_available, image) 
+		VALUES ($1, $2, $3, $4, $5) 
 		RETURNING id;
 	`
 
@@ -101,6 +101,7 @@ func (r *ProductRepository) Create(ctx context.Context, product model.Product) (
 		product.Price,
 		product.Category,
 		product.IsAvailable,
+		product.Image,
 	).Scan(&product.ID)
 
 	if err != nil {
@@ -117,11 +118,11 @@ func (r *ProductRepository) Update(ctx context.Context, id int, product model.Pr
 
 	query := `
 		UPDATE products
-		SET name=$1, price=$2, category=$3, is_available=$4
-		WHERE id=$5;
+		SET name=$1, price=$2, category=$3, is_available=$4, image=$5
+		WHERE id=$6;
 	`
 
-	cmdTag, err := r.db.Exec(ctx, query, product.Name, product.Price, product.Category, product.IsAvailable, id)
+	cmdTag, err := r.db.Exec(ctx, query, product.Name, product.Price, product.Category, product.IsAvailable, product.Image, id)
 
 	if err != nil {
 		return fmt.Errorf("Could not update product: %w", err)

@@ -52,6 +52,8 @@ func main() {
 
 	r := gin.Default()
 
+	r.Static("/static/images", "./public/images")
+
 	r.Use(handler.LoggerMiddleware(logger))
 
 	api := r.Group("/api/v1")
