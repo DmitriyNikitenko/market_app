@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"order_service/internal/handler"
+	"order_service/internal/middleware"
 	"order_service/internal/pkg"
 	"order_service/internal/repository"
 	"order_service/internal/service"
@@ -11,10 +12,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 func main() {
+
+	_ = godotenv.Load()
 
 	cfg := pkg.NewConfigMust()
 	logger, err := pkg.NewLogger(cfg)
@@ -57,8 +61,14 @@ func main() {
 	//настройка роутера Gin
 	r := gin.Default()
 
+	secretKey := os.Getenv("JWT_SECRET")
+	if secretKey == "" {
+		logger.Fatal("JWT_SECRET IS NOT SET")
+	}
 	//группируем роуты
 	api := r.Group("/api/v1")
+
+	api.Use(middleware.AuthMiddleware(secretKey)) //вешаем JWT фильтр. Все запросы под защитой
 	{
 		api.POST("/cart", cartHandler.AddItem)
 		api.GET("/cart", cartHandler.GetCart)

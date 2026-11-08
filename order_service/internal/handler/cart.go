@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"order_service/internal/model"
 	"order_service/internal/service"
@@ -23,8 +24,13 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 		return
 	}
 
-	//todo: JWT
-	input.UserID = 1
+	value, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, "internal server error. Error code: 500")
+		return
+	}
+	userID := value.(int64)
+	fmt.Println("Making order for user:", userID)
 
 	err := h.service.AddItem(c.Request.Context(), input)
 	if err != nil {
@@ -36,11 +42,17 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 }
 
 func (h *CartHandler) GetCart(c *gin.Context) {
-	//temporary hardcode
-	userID := int64(1)
 
+	value, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, "internal server error. Error code: 500")
+		return
+	}
+	userID := value.(int64)
+	fmt.Println("Making order for user:", userID)
 	cart, err := h.service.GetCart(c.Request.Context(), userID)
 	if err != nil {
+		fmt.Println("Реальная ошибка БД:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve cart"})
 		return
 	}
