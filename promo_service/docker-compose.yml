@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  promo_db:
+    image: postgres:16-alpine
+    container_name: promo_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: promo_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - promo_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  promo_postgres_data:

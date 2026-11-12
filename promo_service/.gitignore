@@ -1,0 +1,12 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Настройки и секреты
+.env
+
+# Данные Docker (если монтировались локально)
+*.db
+*.sqlite3

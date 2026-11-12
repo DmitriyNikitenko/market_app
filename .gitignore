@@ -1,2 +1,12 @@
 .env
 .idea/
+
+# Node & Next.js
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+*.env.local
+frontend/.env.local
+next-env.d.ts
+frontend/next-env.d.ts
