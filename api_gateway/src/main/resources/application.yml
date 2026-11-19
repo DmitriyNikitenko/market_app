@@ -6,7 +6,6 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-
       globalcors:
         cors-configurations:
           '[/**]':
@@ -28,6 +27,10 @@ spring:
           uri: http://auth-service:8081
           predicates:
             - Path=/api/auth/**
+        - id: user-service
+          uri: http://user-service:8082
+          predicates:
+            - Path=/api/users/**
 
 jwt:
   secret: ${JWT_SECRET}
