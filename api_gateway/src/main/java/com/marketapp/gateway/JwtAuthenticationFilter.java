@@ -9,6 +9,7 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -26,12 +27,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // Пропускаем открытые эндпоинты (например, регистрацию и логин)
         if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/login")) {
             return chain.filter(exchange);
         }
 
-        // Проверяем наличие заголовка Authorization
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return onError(exchange, HttpStatus.UNAUTHORIZED);
@@ -47,18 +46,15 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            // Токен валиден. Можно извлечь данные (например, email) и прокинуть во внутренний запрос
             String email = claims.getSubject();
 
-            // Мутируем запрос, добавляя заголовок для внутренних сервисов
-            exchange.getRequest().mutate()
+            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Email", email)
                     .build();
 
-            return chain.filter(exchange);
+            return chain.filter(exchange.mutate().request(mutatedRequest).build());
 
         } catch (Exception e) {
-            // Если токен просрочен или подделан, возвращаем 401
             return onError(exchange, HttpStatus.UNAUTHORIZED);
         }
     }
@@ -70,6 +66,6 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1; // Устанавливаем высокий приоритет фильтра
+        return -1;
     }
 }
