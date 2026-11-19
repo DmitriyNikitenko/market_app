@@ -31,6 +31,14 @@ spring:
           uri: http://user-service:8082
           predicates:
             - Path=/api/users/**
+        - id: catalog-service
+          uri: http://catalog-service:8083
+          predicates:
+            - Path=/api/menu/**, /api/products/**
+        - id: order-service
+          uri: http://order-service:8084
+          predicates:
+            - Path=/api/v1/cart/**, /api/v1/checkout/**
 
 jwt:
   secret: ${JWT_SECRET}
