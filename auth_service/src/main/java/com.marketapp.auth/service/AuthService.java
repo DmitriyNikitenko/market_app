@@ -8,6 +8,7 @@ import com.marketapp.auth.repository.UserRepository;
 import com.marketapp.auth.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -24,6 +25,7 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("A user with this email already exists");
@@ -31,12 +33,13 @@ public class AuthService {
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         User user = new User(request.getEmail(), hashedPassword);
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(savedUser.getId(), savedUser.getEmail());
         return new AuthResponse(token);
     }
 
+    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Incorrect email"));
@@ -45,7 +48,7 @@ public class AuthService {
             throw new IllegalArgumentException("Incorrect password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail());
         return new AuthResponse(token);
     }
 }
