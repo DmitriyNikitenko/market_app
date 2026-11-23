@@ -10,7 +10,7 @@ export default function AuthPage() {
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const [isRegister, setIsRegister] = useState(false);
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -24,13 +24,13 @@ export default function AuthPage() {
     try {
       let data;
       if (isRegister) {
-        data = await registerUser(email, password, name);
+        data = await registerUser(email, password, firstName);
       } else {
         data = await loginUser(email, password);
       }
 
       // Сохраняем сессию в стейт и localStorage
-      setAuth(data.user, data.access_token);
+      setAuth(data.user, data.token);
 
       // Перенаправляем на главную
       router.push('/');
@@ -87,9 +87,9 @@ export default function AuthPage() {
               <input
                 type="text"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Денис"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Логин"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>

@@ -39,7 +39,7 @@ export default function Header() {
                 className="text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
                 title="Перейти в профиль"
               >
-                {user.name || user.email}
+                {user.firstName || user.email}
               </Link>
 
               <button

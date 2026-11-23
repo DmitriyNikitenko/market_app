@@ -35,11 +35,11 @@ export default function ProfilePage() {
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
         {/* Аватар */}
         <div className="w-20 h-20 bg-emerald-100 text-emerald-700 font-bold text-2xl rounded-full flex items-center justify-center mx-auto mb-4 ring-4 ring-emerald-50">
-          {user.name ? user.name.slice(0, 2).toUpperCase() : 'US'}
+          {user.firstName ? user.firstName.slice(0, 2).toUpperCase() : 'US'}
         </div>
 
         <h1 className="text-xl font-bold text-slate-900">
-          {user.name || 'Пользователь'}
+          {user.firstName || 'Пользователь'}
         </h1>
         <p className="text-sm text-slate-500 flex items-center justify-center gap-1.5 mt-1 mb-4">
           <Mail className="w-4 h-4 text-slate-400" />
