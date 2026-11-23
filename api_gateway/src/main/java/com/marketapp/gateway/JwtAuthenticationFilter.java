@@ -8,6 +8,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,9 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/login")) {
+        HttpMethod method = exchange.getRequest().getMethod();
+        if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/login")
+                || (HttpMethod.GET.equals(method) && path.startsWith("/api/menu"))) {
             return chain.filter(exchange);
         }
 
